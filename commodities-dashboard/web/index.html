@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Commodities</title>
+<meta name="theme-color" content="#0E1217" />
+<link rel="manifest" href="./manifest.webmanifest" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Commodities" />
+<link rel="apple-touch-icon" href="./icon-180.png" />
+<link rel="icon" href="./icon-192.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+* { box-sizing: border-box; margin: 0; -webkit-tap-highlight-color: transparent; }
+:root {
+  --bg:#0E1217; --panel:#161C24; --panel2:#1A222C; --line:#232C38;
+  --text:#E6EAEF; --muted:#7E8B9C; --muted2:#566273;
+  --bull:#26A69A; --bear:#EF5350; --gold:#E8B84B;
+}
+html,body { background:var(--bg); color:var(--text); }
+body { font-family:'Space Grotesk',sans-serif; min-height:100vh; padding-bottom:max(40px,env(safe-area-inset-bottom)); }
+.mono { font-family:'IBM Plex Mono',monospace; font-variant-numeric:tabular-nums; }
+
+/* header */
+.top { position:sticky; top:0; z-index:20; background:rgba(14,18,23,.92); backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line); display:flex; align-items:center; gap:24px;
+  padding:14px 22px; padding-top:max(14px,env(safe-area-inset-top)); flex-wrap:wrap; }
+.brand { display:flex; align-items:baseline; gap:12px; }
+.logo { font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:21px; letter-spacing:.3px;
+  background:linear-gradient(90deg,#26A69A,#E8B84B); -webkit-background-clip:text;
+  background-clip:text; -webkit-text-fill-color:transparent; }
+.tag { color:var(--muted); font-size:12.5px; letter-spacing:.4px; }
+.tally { display:flex; align-items:center; gap:7px; font-size:18px; font-family:'IBM Plex Mono'; }
+.t-up { color:var(--bull); font-weight:600; } .t-dn { color:var(--bear); font-weight:600; }
+.t-up i,.t-dn i { font-style:normal; font-size:11px; margin-left:2px; }
+.t-div { color:var(--muted2); } .t-lbl { color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:1px; margin-left:4px; }
+.controls { display:flex; align-items:center; gap:12px; margin-left:auto; flex-wrap:wrap; }
+.seg { display:flex; background:var(--panel); border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+.seg button { background:none; border:none; color:var(--muted); font-family:inherit; font-size:12px; padding:7px 13px; cursor:pointer; letter-spacing:.3px; }
+.seg button.on { background:var(--panel2); color:var(--text); box-shadow:inset 0 -2px 0 var(--bull); }
+.updated { display:flex; align-items:center; gap:7px; color:var(--muted); font-size:11.5px; font-family:'IBM Plex Mono'; }
+.updated.stale { color:var(--bear); }
+.dot { width:7px; height:7px; border-radius:50%; background:var(--bull); animation:pulse 2.4s infinite; }
+.updated.stale .dot { background:var(--bear); animation:none; }
+@keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(38,166,154,.5)} 70%{box-shadow:0 0 0 6px rgba(38,166,154,0)} 100%{box-shadow:0 0 0 0 rgba(38,166,154,0)} }
+.refresh { background:var(--panel); border:1px solid var(--line); color:var(--muted); width:34px; height:34px; border-radius:8px; cursor:pointer; font-size:15px; display:flex; align-items:center; justify-content:center; }
+.refresh:hover { color:var(--text); }
+.refresh.spin svg { animation:spin .8s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* main */
+.main { padding:18px 22px; max-width:1500px; margin:0 auto; }
+.group { margin-bottom:26px; }
+.group-head { display:flex; align-items:center; gap:14px; margin:0 2px 13px; }
+.group-name { font-size:12px; letter-spacing:2.5px; text-transform:uppercase; color:var(--muted); font-weight:600; }
+.group-rule { flex:1; height:1px; background:linear-gradient(90deg,var(--line),transparent); }
+.group-count { font-family:'IBM Plex Mono'; font-size:11px; color:var(--muted2); }
+.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:12px; }
+
+/* card */
+.card { text-align:left; background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--c);
+  border-radius:11px; padding:13px 14px 11px; color:inherit; width:100%; font-family:inherit;
+  cursor:pointer; transition:transform .12s ease, background .12s; }
+.card:hover { transform:translateY(-2px); background:var(--panel2); }
+.card:focus-visible { outline:2px solid var(--c); outline-offset:2px; }
+.card.err { border-left-color:var(--muted2); opacity:.55; cursor:default; }
+.card.err:hover { transform:none; background:var(--panel); }
+.card.turning { animation:cardpulse 1.5s ease-in-out infinite; }
+@keyframes cardpulse { 0%,100%{ box-shadow:0 0 0 0 rgba(224,165,58,0) } 50%{ box-shadow:-4px 0 14px -5px var(--c) } }
+.blink { animation:blink 1.05s steps(1,end) infinite; }
+@keyframes blink { 0%,49%{ opacity:1 } 50%,100%{ opacity:.12 } }
+.card-top { display:flex; justify-content:space-between; align-items:flex-start; }
+.card-name { font-size:15px; font-weight:600; }
+.card-ticker { font-family:'IBM Plex Mono'; font-size:10.5px; color:var(--muted2); letter-spacing:.5px; }
+.card-px { text-align:right; }
+.px { font-family:'IBM Plex Mono'; font-size:15px; font-weight:500; display:block; }
+.chg { font-family:'IBM Plex Mono'; font-size:11.5px; }
+.card-spark { margin:9px 0 8px; }
+.card-spark svg { width:100%; height:46px; display:block; }
+.card-bot { display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+.trend-pill { font-family:'IBM Plex Mono'; font-size:10.5px; font-weight:600; letter-spacing:.5px; border:1px solid var(--c); color:var(--c); border-radius:5px; padding:2px 7px; }
+.trend-pill.lg { font-size:12px; padding:4px 10px; }
+.metric { font-family:'IBM Plex Mono'; font-size:12px; display:flex; align-items:baseline; gap:4px; }
+.metric i { font-style:normal; color:var(--muted2); font-size:9.5px; letter-spacing:.5px; text-transform:uppercase; }
+.err-note { color:var(--muted2); font-size:11px; font-family:'IBM Plex Mono'; margin-top:8px; }
+
+/* detail */
+.overlay { position:fixed; inset:0; background:rgba(8,11,15,.74); backdrop-filter:blur(4px); z-index:50;
+  display:flex; align-items:center; justify-content:center; padding:20px; animation:fade .15s ease; }
+@keyframes fade { from{opacity:0} to{opacity:1} }
+.detail { background:var(--panel); border:1px solid var(--line); border-radius:16px; width:100%; max-width:820px;
+  max-height:92vh; overflow:auto; padding:22px 24px; }
+.detail-head { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; }
+.detail-name { font-size:22px; font-weight:600; }
+.detail-ticker { font-family:'IBM Plex Mono'; font-size:11px; color:var(--muted); margin-top:3px; letter-spacing:.4px; }
+.close { background:var(--panel2); border:1px solid var(--line); color:var(--muted); width:32px; height:32px; border-radius:8px; cursor:pointer; font-size:14px; }
+.close:hover { color:var(--text); }
+.detail-price { display:flex; align-items:center; gap:14px; margin-bottom:18px; flex-wrap:wrap; }
+.detail-px { font-family:'IBM Plex Mono'; font-size:30px; font-weight:600; }
+.detail-chg { font-family:'IBM Plex Mono'; font-size:14px; }
+.chart-label { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted2); margin:14px 0 6px; font-weight:600; }
+.chart-label b { color:var(--gold); }
+.big svg { width:100%; display:block; }
+.big.price { border-bottom:1px solid var(--line); padding-bottom:6px; }
+.stats { display:grid; grid-template-columns:repeat(6,1fr); gap:10px; margin-top:18px; background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:14px 12px; }
+.stat { display:flex; flex-direction:column; gap:3px; }
+.stat-l { font-size:9.5px; letter-spacing:1px; text-transform:uppercase; color:var(--muted2); }
+.stat-v { font-family:'IBM Plex Mono'; font-size:16px; font-weight:500; }
+
+.foot { color:var(--muted2); font-size:11px; text-align:center; margin-top:8px; letter-spacing:.3px; line-height:1.6; }
+.loading { text-align:center; color:var(--muted); padding:80px 20px; font-family:'IBM Plex Mono'; font-size:13px; }
+
+@media (max-width:640px){
+  .top { gap:12px; padding:12px 15px; padding-top:max(12px,env(safe-area-inset-top)); }
+  .brand { flex:1; } .controls { width:100%; margin-left:0; justify-content:space-between; }
+  .updated { order:3; }
+  .main { padding:14px 13px; }
+  .grid { grid-template-columns:1fr; gap:10px; }
+  .detail-px { font-size:25px; } .stats { grid-template-columns:repeat(3,1fr); }
+  .overlay { padding:0; } .detail { max-width:none; border-radius:0; max-height:100vh; }
+}
+</style>
+</head>
+<body>
+<div id="app"><div class="loading">Loading markets…</div></div>
+
+<script>
+const BULL="#26A69A", BEAR="#EF5350", GOLD="#E8B84B", TURN="#E0A53A";
+const state = { data:null, stale:false };
+
+/* ---------- math ---------- */
+function metrics(it){
+  const s=it.summation, sig=it.signal, n=s.length;
+  const last=s[n-1], prev=s[n-2], rising=last>prev, lastSig=sig[n-1];
+  const aboveSignal = lastSig!=null ? last>lastSig : null;
+  // weeks = consecutive same-colour bars ending now. The SIGNAL only fires
+  // once there are two same-colour bars in a row (weeks >= 2); a single bar
+  // is an unconfirmed turn.
+  let weeks=0;
+  for(let i=n-1;i>=1;i--){ if((s[i]>s[i-1])===rising) weeks++; else break; }
+  const confirmed = weeks>=2;
+  const signalState = !confirmed ? "turning" : (rising ? "long" : "short");
+  const slope=(s[n-1]-s[Math.max(0,n-5)])/4;
+  const chg = it.prevClose ? (it.price-it.prevClose)/it.prevClose*100 : 0;
+  return {last,prev,rising,confirmed,signalState,lastSig,aboveSignal,weeks,slope,chg};
+}
+const fmtPrice=p=> p>=1000 ? p.toLocaleString(undefined,{maximumFractionDigits:0}) : p.toFixed(2);
+const fmtSig=v=> (v>=0?"+":"")+v.toFixed(1);
+
+/* ---------- svg ---------- */
+function oscSVG(summ, H, thick){
+  const W=1000, padX=4, padY=H*0.13, n=summ.length;
+  let mn=Math.min(...summ), mx=Math.max(...summ); if(mn===mx){mn-=1;mx+=1;}
+  const sp=mx-mn;
+  const X=i=>padX+(i/(n-1))*(W-2*padX);
+  const Y=v=>padY+(1-(v-mn)/sp)*(H-2*padY);
+  let out=`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="height:${H}px">`;
+  if(mn<=0&&mx>=0){const z=Y(0);out+=`<line x1="${padX}" y1="${z}" x2="${W-padX}" y2="${z}" stroke="#3A4554" stroke-width="1" stroke-dasharray="3 4"/>`;}
+  for(let i=1;i<n;i++){
+    const up=summ[i]>summ[i-1];
+    out+=`<line x1="${X(i-1)}" y1="${Y(summ[i-1])}" x2="${X(i)}" y2="${Y(summ[i])}" stroke="${up?BULL:BEAR}" stroke-width="${thick}" stroke-linecap="round"/>`;
+  }
+  return out+`</svg>`;
+}
+function candleSVG(ohlc, H){
+  // ohlc = [[o,h,l,c], ...]; drawn with viewBox so it scales to container width.
+  const W=1000, padX=6, padY=8, n=ohlc.length;
+  const highs=ohlc.map(b=>b[1]), lows=ohlc.map(b=>b[2]);
+  let mn=Math.min(...lows), mx=Math.max(...highs); if(mn===mx){mn-=1;mx+=1;}
+  const slot=(W-2*padX)/n, bodyW=slot*0.62, wickW=Math.max(slot*0.10,1.4);
+  const Y=v=>padY+(1-(v-mn)/(mx-mn))*(H-2*padY);
+  let out=`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="height:${H}px">`;
+  for(let i=0;i<n;i++){
+    const [o,h,l,c]=ohlc[i], up=c>=o, col=up?BULL:BEAR;
+    const cx=padX+slot*(i+0.5);
+    const yH=Y(h), yL=Y(l), yO=Y(o), yC=Y(c);
+    const top=Math.min(yO,yC), bh=Math.max(Math.abs(yO-yC),1.2);
+    out+=`<rect x="${cx-wickW/2}" y="${yH}" width="${wickW}" height="${Math.max(yL-yH,0.5)}" fill="${col}" opacity=".85"/>`;
+    out+=`<rect x="${cx-bodyW/2}" y="${top}" width="${bodyW}" height="${bh}" fill="${col}"/>`;
+  }
+  return out+`</svg>`;
+}
+
+/* ---------- render ---------- */
+function flatten(data){
+  const arr=[];
+  data.groups.forEach(g=>g.items.forEach(it=>arr.push({...it,group:g.name})));
+  return arr;
+}
+function cardHTML(it){
+  if(it.status==="error"){
+    return `<div class="card err"><div class="card-top"><div><span class="card-name">${it.name}</span><br><span class="card-ticker">${it.ticker}</span></div></div><div class="err-note">data unavailable</div></div>`;
+  }
+  const m=metrics(it);
+  const st=m.signalState;
+  const c = st==="long"?BULL : st==="short"?BEAR : TURN;
+  const label = st==="long"?"▲ RISING" : st==="short"?"▼ FALLING" : "◆ TURNING";
+  return `<div class="card" style="--c:${c}" data-ticker="${it.ticker}" role="button" tabindex="0">
+    <div class="card-top">
+      <div><div class="card-name">${it.name}</div><div class="card-ticker">${it.ticker}</div></div>
+      <div class="card-px"><span class="px">${fmtPrice(it.price)}</span><span class="chg" style="color:${m.chg>=0?BULL:BEAR}">${(m.chg>=0?"+":"")+m.chg.toFixed(2)}%</span></div>
+    </div>
+    <div class="card-spark">${oscSVG(it.summation,46,1.6)}</div>
+    <div class="card-bot">
+      <span class="trend-pill" style="--c:${c};border-color:${c};color:${c}">${label}</span>
+    </div></div>`;
+}
+function render(){
+  const d=state.data; if(!d){return;}
+  const all=flatten(d).filter(x=>x.status!=="error");
+  const groups=d.groups.map(g=>({
+    name:g.name,
+    items:g.items.slice().sort((a,b)=>a.name.localeCompare(b.name))
+  })).filter(g=>g.items.length);
+
+  const upd=new Date(d.generated);
+  const ageMin=(Date.now()-upd.getTime())/60000;
+  const updTxt=upd.toLocaleString(undefined,{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"});
+  const staleCls = (state.stale||ageMin>150) ? "stale" : "";
+
+  document.getElementById("app").innerHTML=`
+    <header class="top">
+      <div class="brand"><div class="logo">Commodities</div></div>
+      <div class="controls">
+        <div class="updated ${staleCls}"><span class="dot"></span><span>${state.stale?"offline · ":""}updated ${updTxt}</span></div>
+        <button class="refresh" id="refreshBtn" title="Refresh"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></button>
+      </div>
+    </header>
+    <main class="main">
+      ${groups.map(g=>`<section class="group"><div class="group-head"><span class="group-name">${g.name}</span><span class="group-rule"></span><span class="group-count">${g.items.length}</span></div><div class="grid">${g.items.map(cardHTML).join("")}</div></section>`).join("")}
+      <footer class="foot">Source: Yahoo Finance · ${all.length} markets · weekly · tap a card to enlarge<br>Signal fires on two same-colour bars in a row · EMA(19/39) of ATR-normalised change, cumulated</footer>
+    </main>`;
+  wire();
+}
+function detailHTML(it){
+  const m=metrics(it);
+  const st=m.signalState;
+  const c = st==="long"?BULL : st==="short"?BEAR : TURN;
+  const label = st==="long"?"▲ RISING" : st==="short"?"▼ FALLING" : "◆ TURNING";
+  return `<div class="overlay" id="overlay"><div class="detail">
+    <div class="detail-head">
+      <div><div class="detail-name">${it.name}</div><div class="detail-ticker">${it.ticker} · weekly · 1939 (19/39 · ATR14)</div></div>
+      <button class="close" id="closeBtn" aria-label="Close">✕</button>
+    </div>
+    <div class="detail-price">
+      <span class="detail-px">${fmtPrice(it.price)}</span>
+      <span class="detail-chg" style="color:${m.chg>=0?BULL:BEAR}">${(m.chg>=0?"+":"")+m.chg.toFixed(2)}% 1d</span>
+      <span class="trend-pill lg" style="border-color:${c};color:${c}">${label}</span>
+    </div>
+    <div class="chart-label">Price · weekly candles · ${it.ohlc.length}w</div>
+    <div class="big">${candleSVG(it.ohlc,220)}</div>
+    <div class="chart-label">1939 oscillator</div>
+    <div class="big">${oscSVG(it.summation,150,2)}</div>
+  </div></div>`;
+}
+function openDetail(it){
+  const wrap=document.createElement("div"); wrap.id="detailWrap"; wrap.innerHTML=detailHTML(it);
+  document.body.appendChild(wrap);
+  document.body.style.overflow="hidden";
+  document.getElementById("overlay").addEventListener("click",e=>{ if(e.target.id==="overlay") closeDetail(); });
+  document.getElementById("closeBtn").addEventListener("click",closeDetail);
+  document.addEventListener("keydown",escClose);
+}
+function escClose(e){ if(e.key==="Escape") closeDetail(); }
+function closeDetail(){ const w=document.getElementById("detailWrap"); if(w) w.remove(); document.body.style.overflow=""; document.removeEventListener("keydown",escClose); }
+
+function wire(){
+  document.querySelectorAll('.card[data-ticker]').forEach(el=>{
+    const open=()=>{ const it=flatten(state.data).find(x=>x.ticker===el.dataset.ticker); if(it&&it.status!=="error") openDetail(it); };
+    el.onclick=open;
+    el.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); open(); } };
+  });
+  const rb=document.getElementById("refreshBtn");
+  if(rb) rb.onclick=()=>{ rb.classList.add("spin"); load().finally(()=>setTimeout(()=>rb.classList.remove("spin"),600)); };
+}
+
+/* ---------- data ---------- */
+async function load(){
+  try{
+    const r=await fetch("./market_data.json?t="+Date.now(),{cache:"no-store"});
+    if(!r.ok) throw new Error(r.status);
+    state.data=await r.json(); state.stale=false;
+  }catch(e){
+    if(!state.data){ document.getElementById("app").innerHTML=`<div class="loading">Couldn't load market data.<br>Retrying…</div>`; return; }
+    state.stale=true;
+  }
+  render();
+}
+load();
+setInterval(load, 10*60*1000);                 // refresh while open
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden) load(); });
+
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
+}
+</script>
+</body>
+</html>
