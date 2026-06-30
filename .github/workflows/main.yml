@@ -19,6 +19,9 @@ name: Update Commodities dashboard
    jobs:
      build-and-deploy:
        runs-on: ubuntu-latest
+       defaults:
+         run:
+           working-directory: commodities-dashboard
        environment:
          name: github-pages
          url: ${{ steps.deploy.outputs.page_url }}
@@ -38,6 +41,6 @@ name: Update Commodities dashboard
          - uses: actions/configure-pages@v5
          - uses: actions/upload-pages-artifact@v3
            with:
-             path: site
+             path: commodities-dashboard/site
          - id: deploy
            uses: actions/deploy-pages@v4
